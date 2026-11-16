@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Meridian · 预设一览</title>
+<style>
+  /* Design reference for the six built-in skins. Not shipped in the app.
+     The StandBy skin is intentionally a gradient numeral — that is the whole
+     point of the preset, not a "gradient text" decoration. */
+  :root{
+    --ink:#F4F1EC; --ink-2:#A9A39B; --ink-3:#6F6A63; --ink-4:#46433F;
+    --hairline:rgba(255,255,255,.075); --hairline-strong:rgba(255,255,255,.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#000;
+    font-family:-apple-system,"SF Pro Rounded","SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .device{position:relative;width:1366px;height:1024px;overflow:hidden;background:#000;
+    display:flex;flex-direction:column;justify-content:space-between;padding:56px 64px}
+  .glow{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(90% 80% at 38% 42%, rgba(47,107,255,.16) 0%, rgba(47,107,255,.04) 46%, transparent 74%)}
+
+  .toprail{position:relative;display:flex;justify-content:space-between;align-items:baseline}
+  .caps{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+  .capsw{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(90,162,255,.55)}
+
+  .center{position:relative;display:flex;align-items:center;gap:44px;margin-top:-24px}
+  .hm{
+    font-size:392px;line-height:.82;font-weight:800;letter-spacing:-.045em;
+    font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#3B76FF 0%,#6FA8FF 58%,#9BD8FF 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    display:flex;align-items:center;gap:.02em;
+  }
+  .colon{display:inline-flex;flex-direction:column;justify-content:center;gap:44px;width:.16em}
+  .colon i{display:block;width:.075em;height:.075em;border-radius:50%;background:#4F86FF;opacity:.85}
+
+  .ring{position:relative;width:96px;height:96px;transform:translateY(-52px)}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .sec{position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:600;
+    color:#7FB4FF;font-variant-numeric:tabular-nums}
+
+  .meta{position:relative;display:flex;align-items:center;gap:16px;margin-top:8px}
+  .meta span{font-size:12px;color:rgba(155,200,255,.55);letter-spacing:.06em}
+
+  /* ---- preset shelf ---- */
+  .shelf{position:relative;display:flex;gap:12px;align-items:stretch}
+  .card{flex:1;border-radius:14px;border:1px solid var(--hairline);background:rgba(255,255,255,.03);
+    padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .card.active{border-color:rgba(255,255,255,.42);background:rgba(255,255,255,.06)}
+  .sample{height:64px;border-radius:9px;display:grid;place-items:center;position:relative;overflow:hidden}
+  .sample .t{font-size:26px;font-variant-numeric:tabular-nums;font-weight:400;line-height:1}
+  .dotmark{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%}
+  .name{font-size:10px;font-weight:600;letter-spacing:.16em;color:var(--ink-3);text-transform:uppercase}
+  .card.active .name{color:var(--ink)}
+  .note{font-size:9px;letter-spacing:.1em;color:var(--ink-4);text-transform:uppercase}
+  .shelfcap{position:relative;display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="glow"></div>
+
+  <div class="toprail">
+    <span class="caps">周六 · 11月15日 · 农历十月十五</span>
+    <span class="capsw">StandBy · 悬浮蓝</span>
+  </div>
+
+  <div class="center">
+    <div class="hm">21<span class="colon"><i></i><i></i></span>47</div>
+    <div class="ring">
+      <svg width="96" height="96" viewBox="0 0 96 96">
+        <circle cx="48" cy="48" r="44" stroke="rgba(255,255,255,.06)" stroke-width="2" fill="none"/>
+        <circle cx="48" cy="48" r="44" stroke="#5AA2FF" stroke-width="2.5" fill="none"
+                stroke-linecap="round" stroke-dasharray="276.4" stroke-dashoffset="170.5"/>
+      </svg>
+      <span class="sec">23</span>
+    </div>
+  </div>
+
+  <div class="meta">
+    <span>下午 · UTC+8</span>
+    <span>=</span>
+    <span>今日 3/7</span>
+    <span>=</span>
+    <span>下一个 22:00 · 写周报并归档</span>
+  </div>
+
+  <div>
+    <div class="shelfcap">
+      <span class="caps" style="color:var(--ink-2)">内置预设</span>
+      <span class="caps" style="color:var(--ink-4)">设置 → 外观 · 还可在色板里换成任意颜色</span>
+    </div>
+    <div class="shelf">
+      <div class="card">
+        <div class="sample" style="background:#08090B">
+          <span class="dotmark" style="background:#E0A662"></span>
+          <span class="t" style="color:#F4F1EC;font-weight:300">21:47</span>
+        </div>
+        <div class="name">石墨</div><div class="note">默认 · 暖白琥珀</div>
+      </div>
+      <div class="card active">
+        <div class="sample" style="background:#000">
+          <span class="dotmark" style="background:#5AA2FF"></span>
+          <span class="t" style="font-weight:800;background:linear-gradient(180deg,#3B76FF,#9BD8FF);-webkit-background-clip:text;background-clip:text;color:transparent">21:47</span>
+        </div>
+        <div class="name">悬浮蓝</div><div class="note">iOS StandBy · 渐变粗圆</div>
+      </div>
+      <div class="card">
+        <div class="sample" style="background:#0B0704">
+          <span class="dotmark" style="background:#E8A76A"></span>
+          <span class="t" style="font-weight:300;background:linear-gradient(180deg,#E8A76A,#F0714A);-webkit-background-clip:text;background-clip:text;color:transparent">21:47</span>
+        </div>
+        <div class="name">灯下琥珀</div><div class="note">暖橙渐变 · 细字重</div>
+      </div>
+      <div class="card">
+        <div class="sample" style="background:#04100E">
+          <span class="dotmark" style="background:#7FDCC0"></span>
+          <span class="t" style="font-weight:500;background:linear-gradient(180deg,#9BE8CE,#5BC8E8);-webkit-background-clip:text;background-clip:text;color:transparent">21:47</span>
+        </div>
+        <div class="name">极光</div><div class="note">薄荷青 · 中字重</div>
+      </div>
+      <div class="card">
+        <div class="sample" style="background:#0A0608">
+          <span class="dotmark" style="background:#E8836F"></span>
+          <span class="t" style="font-weight:300;font-family:Georgia,serif;background:linear-gradient(180deg,#E8836F,#F3B98F);-webkit-background-clip:text;background-clip:text;color:transparent">21:47</span>
+        </div>
+        <div class="name">赭红</div><div class="note">衬线 · 珊瑚渐变</div>
+      </div>
+      <div class="card">
+        <div class="sample" style="background:#000">
+          <span class="dotmark" style="background:#FFFFFF"></span>
+          <span class="t" style="color:#fff;font-weight:200">21:47</span>
+        </div>
+        <div class="name">纯白墨</div><div class="note">无环 · 极细</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{
+ "target": "file:///C:/Users/Q/Documents/deepseek-harness/default-workspace/meridian/design/skins.html",
+ "at": "2026-11-15T13:59:52.906Z",
+ "launchMode": "playwright",
+ "widths": {
+  "1366": {
+   "screenshot": "C:\\Users\\Q\\Documents\\deepseek-harness\\default-workspace\\meridian\\design\\shots\\1366.png",
+   "horizontalOverflowPx": 0
+  }
+ },
+ "consoleErrors": [],
+ "pageErrors": [],
+ "failedRequests": [],
+ "motion": {
+  "cssSources": {
+   "styleTags": 1,
+   "linkedSheets": 0,
+   "cssChars": 3076,
+   "commentsStripped": 240
+  },
+  "transitionAll": {
+   "count": 0,
+   "samples": []
+  },
+  "layoutProps": {
+   "count": 0,
+   "samples": []
+  },
+  "layoutChangedInState": {
+   "count": 0,
+   "samples": [],
+   "heuristic": true
+  },
+  "longDuration": {
+   "count": 0,
+   "values": []
+  },
+  "scaleFromZero": {
+   "count": 0,
+   "samples": []
+  },
+  "reducedMotionHandled": false,
+  "defaultEasing": {
+   "count": 0,
+   "samples": []
+  },
+  "aiSmell": {
+   "purpleBlueGradient": 0,
+   "gradientText": 2,
+   "emojiCount": 0,
+   "lorem": false,
+   "centeredEverything": false
+  }
+ },
+ "cls": 0,
+ "frames": {
+  "samples": 73,
+  "p50": 16.7,
+  "p95": 16.8,
+  "max": 16.8,
+  "over20": 0,
+  "over33": 0,
+  "over50": 0
+ },
+ "notes": []
+}

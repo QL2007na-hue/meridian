@@ -1,0 +1,45 @@
+# Meridian — nginx 站点示例
+#
+# 两件事：静态门户（含 IPA 下载、下发页）和 /api 反代到本机任务服务。
+# 注意 SSE：/api/v1/stream 必须关掉缓冲，否则事件会被攒着发，实时就没了。
+#
+# 用法：把下面的 server 块抄进你自己的站点配置（或单独建
+# /etc/nginx/sites-available/meridian 再 ln -s 到 sites-enabled），
+# 改 server_name 与两处路径，然后 nginx -t && systemctl reload nginx。
+
+server {
+    listen 80;
+    # 换成你的域名；纯 IP 部署就写 IP
+    server_name clock.example.com;
+
+    # 静态门户：把 deploy/portal/ 的内容放这里
+    root /var/www/meridian;
+    index index.html;
+
+    location = /meridian { return 301 /meridian/; }
+
+    location /meridian/api/ {
+        proxy_pass http://127.0.0.1:8791/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # SSE 长连接：不缓冲、不缓存、读超时要长
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+
+        client_max_body_size 2m;
+    }
+
+    location /meridian/ {
+        alias /var/www/meridian/;
+        index index.html;
+    }
+
+    # 想要 HTTPS 就把 443 的 server 块加上，并在 App 里打开「信任自签名证书」
+    # （只对填写的那个 host 生效）。
+}

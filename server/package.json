@@ -1,0 +1,14 @@
+{
+  "name": "meridian-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency self-hosted task server for the Meridian clock.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node meridian-server.mjs",
+    "test": "node test/api.test.mjs"
+  }
+}

@@ -1,0 +1,70 @@
+{
+ "target": "http://127.0.0.1:18790/push?token=dev-token",
+ "at": "2026-11-15T13:40:03.065Z",
+ "launchMode": "playwright",
+ "widths": {
+  "390": {
+   "screenshot": "C:\\Users\\Q\\Documents\\deepseek-harness\\default-workspace\\meridian\\design\\shots\\push\\390.png",
+   "horizontalOverflowPx": 0
+  },
+  "844": {
+   "screenshot": "C:\\Users\\Q\\Documents\\deepseek-harness\\default-workspace\\meridian\\design\\shots\\push\\844.png",
+   "horizontalOverflowPx": 0
+  }
+ },
+ "consoleErrors": [],
+ "pageErrors": [],
+ "failedRequests": [],
+ "motion": {
+  "cssSources": {
+   "styleTags": 1,
+   "linkedSheets": 0,
+   "cssChars": 5347,
+   "commentsStripped": 49
+  },
+  "transitionAll": {
+   "count": 0,
+   "samples": []
+  },
+  "layoutProps": {
+   "count": 0,
+   "samples": []
+  },
+  "layoutChangedInState": {
+   "count": 0,
+   "samples": [],
+   "heuristic": true
+  },
+  "longDuration": {
+   "count": 0,
+   "values": []
+  },
+  "scaleFromZero": {
+   "count": 0,
+   "samples": []
+  },
+  "reducedMotionHandled": true,
+  "defaultEasing": {
+   "count": 0,
+   "samples": []
+  },
+  "aiSmell": {
+   "purpleBlueGradient": 0,
+   "gradientText": 0,
+   "emojiCount": 0,
+   "lorem": false,
+   "centeredEverything": false
+  }
+ },
+ "cls": 0,
+ "frames": {
+  "samples": 73,
+  "p50": 16.7,
+  "p95": 16.7,
+  "max": 16.8,
+  "over20": 0,
+  "over33": 0,
+  "over50": 0
+ },
+ "notes": []
+}

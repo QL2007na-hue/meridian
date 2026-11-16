@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Meridian · 沉浸态（右侧窥视条）</title>
+<style>
+  /* Design reference for the immersive stage: the clock plus a three-line
+     glance at the day. Not shipped in the app. */
+  :root{
+    --canvas:#08090B; --ink:#F4F1EC; --ink-2:#A9A39B; --ink-3:#6F6A63; --ink-4:#46433F;
+    --ember:#E0A662; --hairline:rgba(255,255,255,.075); --hairline-2:rgba(255,255,255,.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--canvas);
+    font-family:-apple-system,"SF Pro Rounded","SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .device{position:relative;width:1366px;height:1024px;overflow:hidden;background:var(--canvas);
+    display:grid;grid-template-columns:1fr 240px;padding:34px 32px 30px;column-gap:0}
+  .ambient{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 100% at 34% 46%, rgba(224,166,98,.065) 0%, rgba(224,166,98,.015) 44%, transparent 74%)}
+  .horizon{position:absolute;left:64px;right:64px;bottom:132px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);opacity:.6}
+
+  .stage{position:relative;display:flex;flex-direction:column;justify-content:space-between;padding-right:40px}
+  .toprail{display:flex;justify-content:space-between;align-items:baseline;padding-top:6px}
+  .caps{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+  .caps-2{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+  .lunar{font-size:10px;letter-spacing:.12em;color:var(--ink-4)}
+  .dot-sep{width:1px;height:9px;background:var(--hairline-2);align-self:center}
+
+  .clockwrap{display:flex;flex-direction:column;gap:26px;margin-top:-4px;align-self:center}
+  .hm{font-size:218px;line-height:.86;font-weight:200;letter-spacing:-.045em;
+    font-variant-numeric:tabular-nums;color:var(--ink);display:flex;align-items:center;gap:.05em}
+  .colon{display:inline-flex;flex-direction:column;justify-content:center;gap:36px;width:.2em}
+  .colon i{display:block;width:.08em;height:.08em;border-radius:50%;background:rgba(244,241,236,.55)}
+  .side{display:flex;align-items:center;gap:18px;transform:translateY(-30px)}
+  .ring{position:relative;width:64px;height:64px;display:grid;place-items:center}
+  .ring .sec{font-size:21px;font-weight:400;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+  .meta{display:flex;align-items:center;gap:16px}
+  .meta span{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .meta .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-4)}
+  .daybar{position:relative;height:1px;background:rgba(255,255,255,.07);margin-top:20px}
+  .daybar i{position:absolute;inset:0 auto 0 0;width:90.7%;background:rgba(224,166,98,.5)}
+
+  /* ---- the glance ---- */
+  .glance{position:relative;display:flex;gap:16px;align-self:center}
+  .glance .rule{width:1px;background:var(--hairline);margin:4px 0}
+  .glance .col{flex:1;display:flex;flex-direction:column;gap:0;min-width:0}
+  .glance .head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px}
+  .glance .head .n{font-size:10px;color:var(--ink-4);font-variant-numeric:tabular-nums;letter-spacing:.1em}
+  .row{display:flex;align-items:baseline;gap:8px;height:30px;opacity:0;
+    animation:reveal .55s cubic-bezier(.2,.85,.25,1) forwards}
+  .row:nth-child(2){animation-delay:.06s}
+  .row:nth-child(3){animation-delay:.12s}
+  .row:nth-child(4){animation-delay:.18s}
+  @keyframes reveal{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+  .row .dot{width:4px;height:4px;border-radius:50%;background:var(--ink-4);transform:translateY(-4px)}
+  .row.crit .dot{background:var(--ember)}
+  .row.mid .dot{background:rgba(224,166,98,.5)}
+  .row .t{font-size:10px;color:var(--ink-4);font-variant-numeric:tabular-nums;width:38px}
+  .row .title{flex:1;font-size:14px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row.done .title{color:var(--ink-4);text-decoration:line-through}
+  .row.done .dot{background:var(--ink-4)}
+  .glance .more{margin-top:auto;padding-top:20px;display:flex;align-items:center;gap:6px}
+  .glance .more span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+  .glance .more svg{width:9px;height:9px;stroke:var(--ink-4);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  .status{display:flex;align-items:center;gap:18px;padding-bottom:2px;height:16px;visibility:hidden}
+  .status .i{font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+  @media (prefers-reduced-motion:reduce){ .row{animation:none;opacity:1} }
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="ambient"></div>
+  <div class="horizon"></div>
+
+  <section class="stage">
+    <div class="toprail">
+      <div style="display:flex;align-items:baseline;gap:14px">
+        <span class="caps-2">周六 · 11月16日</span>
+        <span class="dot-sep"></span>
+        <span class="caps">第 320 天</span>
+      </div>
+      <span class="lunar">农历 十月初七 · GMT+8</span>
+    </div>
+
+    <div class="clockwrap">
+      <div style="display:flex;align-items:center;gap:34px">
+        <div class="hm">21<span class="colon"><i></i><i></i></span>47</div>
+        <div class="side">
+          <div class="ring">
+            <svg viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="28" stroke="rgba(255,255,255,.055)" stroke-width="1" fill="none"/>
+              <circle cx="32" cy="32" r="28" stroke="#E0A662" stroke-width="1.5" fill="none"
+                      stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="108.4"/>
+            </svg>
+            <span class="sec">23</span>
+          </div>
+        </div>
+      </div>
+      <div class="meta"><span class="k">下午</span><span>UTC+8</span><span class="dot-sep"></span><span>今日已过 90%</span></div>
+      <div class="daybar"><i></i></div>
+    </div>
+
+    <div class="status"><span class="i">在线 · 21:46 同步</span></div>
+  </section>
+
+  <aside class="glance">
+    <div class="rule"></div>
+    <div class="col">
+      <div class="head">
+        <span class="caps">今日</span>
+        <span class="n">3/7</span>
+      </div>
+      <div class="row done"><span class="dot"></span><span class="t">09:30</span><span class="title">晨会 · 同步本周排期</span></div>
+      <div class="row crit"><span class="dot"></span><span class="t">14:00</span><span class="title">与设计师过一版首页</span></div>
+      <div class="row mid"><span class="dot"></span><span class="t">22:00</span><span class="title">写周报并归档</span></div>
+      <div class="more">
+        <span>展开</span>
+        <svg viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

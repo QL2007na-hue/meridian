@@ -1,0 +1,31 @@
+{
+  "name": "Meridian",
+  "subtitle": "子午时钟",
+  "description": "iPad 横屏全屏时钟。时间舞台 + 今日待办，待办由自建服务器下发。",
+  "iconURL": "http://YOUR_HOST/meridian/files/AppIcon.png",
+  "headerURL": "",
+  "website": "http://YOUR_HOST/meridian/",
+  "tintColor": "#E0A662",
+  "featuredApps": [],
+  "apps": [
+    {
+      "name": "Meridian",
+      "bundleIdentifier": "app.meridian.clock",
+      "developerName": "Meridian",
+      "subtitle": "横屏全屏时钟",
+      "localizedDescription": "横屏全屏时钟，待办由自建服务器下发，支持手机网页下发。",
+      "iconURL": "http://YOUR_HOST/meridian/files/AppIcon.png",
+      "tintColor": "#E0A662",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "buildVersion": "22",
+          "date": "2026-11-16",
+          "downloadURL": "http://YOUR_HOST/meridian/files/Meridian-unsigned.ipa",
+          "size": 0,
+          "minOSVersion": "17.0"
+        }
+      ]
+    }
+  ]
+}

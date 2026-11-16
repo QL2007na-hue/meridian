@@ -1,0 +1,10 @@
+{
+  "tag": "r22",
+  "builtAt": "2026-11-16 20:30",
+  "file": "Meridian-unsigned.ipa",
+  "bytes": 0,
+  "bundleVersion": "22",
+  "md5": "00000000000000000000000000000000",
+  "url": "http://YOUR_HOST/meridian/files/Meridian-unsigned.ipa",
+  "notes": "把你自己的构建信息写在这里"
+}

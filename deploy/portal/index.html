@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08090B">
+<title>Meridian · 子午时钟</title>
+<style>
+  :root{
+    --canvas:#08090B; --lift:#0D0E11;
+    --ink:#F4F1EC; --ink-2:#A9A39B; --ink-3:#6F6A63; --ink-4:#46433F;
+    --ember:#E0A662;
+    --hairline:rgba(255,255,255,.075); --hairline-2:rgba(255,255,255,.15);
+    --card:linear-gradient(180deg,rgba(255,255,255,.062),rgba(255,255,255,.028));
+    --r:18px; --r-sm:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--canvas);color:var(--ink)}
+  body{
+    font-family:-apple-system,"SF Pro Display","SF Pro Text","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;display:flex;justify-content:center;
+    padding:40px 20px 64px;
+    background:
+      radial-gradient(90% 60% at 20% 0%, rgba(224,166,98,.07), transparent 60%),
+      radial-gradient(70% 50% at 100% 10%, rgba(43,52,64,.16), transparent 60%),
+      var(--canvas);
+  }
+  .wrap{width:100%;max-width:760px}
+
+  .caps{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:28px}
+  h1{font-size:40px;font-weight:200;letter-spacing:-.03em;line-height:1}
+  h1 span{color:var(--ink-3);font-weight:300}
+  .sub{margin-top:10px;font-size:13px;color:var(--ink-3);line-height:1.6}
+
+  .grid{display:grid;gap:14px}
+  .card{
+    background:var(--card);border:1px solid var(--hairline);border-radius:var(--r);
+    padding:22px;position:relative;overflow:hidden;
+    box-shadow:0 10px 22px rgba(0,0,0,.35);
+  }
+  .card::before{content:"";position:absolute;top:0;left:18px;right:18px;height:1px;
+    background:linear-gradient(180deg,rgba(255,255,255,.10),transparent)}
+  .card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .card h2{font-size:17px;font-weight:500;letter-spacing:.01em}
+
+  /* download */
+  .meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin:14px 0 18px}
+  .meta div{font-size:12px;color:var(--ink-3)}
+  .meta b{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-4);margin-bottom:4px;font-weight:600}
+  .meta span{color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;justify-content:center;
+    min-height:46px;padding:0 22px;border-radius:999px;border:0;cursor:pointer;
+    background:var(--ember);color:#14100A;font-size:14px;font-weight:600;letter-spacing:.02em;
+    text-decoration:none;transition:transform .18s cubic-bezier(.2,.8,.2,1),opacity .18s;
+  }
+  .btn:hover{opacity:.92}
+  .btn:active{transform:scale(.975)}
+  .btn.ghost{background:transparent;border:1px solid var(--hairline-2);color:var(--ink);font-weight:500}
+  .btn.ghost:hover{background:rgba(255,255,255,.05)}
+  .hint{margin-top:14px;font-size:12px;color:var(--ink-3);line-height:1.7}
+  .hint code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--ink-2);
+    background:rgba(255,255,255,.05);padding:2px 6px;border-radius:5px}
+
+  /* channels */
+  .channels{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+  .ch{
+    display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:var(--r-sm);
+    border:1px solid var(--hairline);background:rgba(255,255,255,.028);
+    text-decoration:none;color:inherit;transition:background .2s,border-color .2s,transform .18s;
+  }
+  .ch:hover{background:rgba(255,255,255,.055);border-color:var(--hairline-2)}
+  .ch:active{transform:scale(.985)}
+  .ch .idx{font-size:10px;font-weight:600;letter-spacing:.18em;color:var(--ink-4);font-variant-numeric:tabular-nums}
+  .ch .name{font-size:14px;color:var(--ink)}
+  .ch .desc{font-size:11px;color:var(--ink-3)}
+  .ch .arrow{margin-top:2px;font-size:11px;color:var(--ember);letter-spacing:.1em}
+
+  /* status */
+  .status{display:flex;flex-wrap:wrap;gap:26px;align-items:center}
+  .stat{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--ink-4)}
+  .dot.on{background:var(--ember);box-shadow:0 0 0 3px rgba(224,166,98,.14)}
+  .dot.off{background:var(--ink-4)}
+  .num{font-variant-numeric:tabular-nums;color:var(--ink)}
+  footer{margin-top:32px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    font-size:11px;color:var(--ink-4);letter-spacing:.06em}
+  a{color:var(--ink-2)}
+  @media (max-width:520px){
+    body{padding:28px 16px 48px}
+    h1{font-size:32px}
+    .card{padding:18px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .btn,.ch{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="caps">Meridian · 子午</div>
+      <h1 style="margin-top:12px">时钟<span>，和它知道的事</span></h1>
+      <p class="sub">iPad 横屏全屏时钟。时间舞台 + 今日待办，待办由这台服务器下发，也能在手机上随手推一条。</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- 1. download -->
+    <section class="card">
+      <div class="card-head">
+        <h2>下载 App</h2>
+        <span class="caps">iOS 17+ · 横屏</span>
+      </div>
+      <div class="meta">
+        <div><b>文件</b><span>Meridian-unsigned.ipa</span></div>
+        <div><b>大小</b><span id="size">—</span></div>
+        <div><b>构建</b><span id="build">—</span></div>
+        <div><b>签名</b><span>未签名（需侧载）</span></div>
+      </div>
+      <a class="btn" id="dl" href="files/Meridian-unsigned.ipa" download>
+        下载 IPA
+      </a>
+      <a class="btn ghost" href="push/" style="margin-left:8px">先下发一条试试</a>
+      <p class="hint">
+        用 <b>Sideloadly</b>（Windows）或 <b>AltStore</b> 侧载：iPad 连电脑 → 拖入 IPA → 填 Apple ID → Start →
+        设置里信任开发者证书。免费账号 7 天到期，重新签一次即可。
+      </p>
+    </section>
+
+    <!-- 2. push channels -->
+    <section class="card">
+      <div class="card-head">
+        <h2>下发通道</h2>
+        <span class="caps" id="chnote">6 条 · 点序号进入</span>
+      </div>
+      <div class="channels" id="channels">
+        <a class="ch" href="push/?ch=01"><span class="idx">01</span><span class="name">日常</span><span class="desc">今天要做的事</span><span class="arrow">进入 ›</span></a>
+        <a class="ch" href="push/?ch=02"><span class="idx">02</span><span class="name">工作</span><span class="desc">会议 / 交付</span><span class="arrow">进入 ›</span></a>
+        <a class="ch" href="push/?ch=03"><span class="idx">03</span><span class="name">学习</span><span class="desc">阅读 / 练习</span><span class="arrow">进入 ›</span></a>
+        <a class="ch" href="push/?ch=04"><span class="idx">04</span><span class="name">生活</span><span class="desc">采购 / 家务</span><span class="arrow">进入 ›</span></a>
+        <a class="ch" href="push/?ch=05"><span class="idx">05</span><span class="name">提醒</span><span class="desc">别忘的那件</span><span class="arrow">进入 ›</span></a>
+        <a class="ch" href="push/?ch=06"><span class="idx">06</span><span class="name">临时</span><span class="desc">五分钟内的事</span><span class="arrow">进入 ›</span></a>
+      </div>
+      <p class="hint">
+        每条通道就是一次下发入口。进去后输入口令（服务器上的 <code>MERIDIAN_TOKEN</code>），
+        标题 + 时间即可推到 iPad 上；iPad 前台时 3 秒内出现。
+      </p>
+    </section>
+
+    <!-- 3. status -->
+    <section class="card">
+      <div class="card-head">
+        <h2>服务状态</h2>
+        <span class="caps" id="hostnote">本机</span>
+      </div>
+      <div class="status">
+        <div class="stat"><span class="dot" id="dot"></span><span id="health">检测中…</span></div>
+        <div class="stat">rev <span class="num" id="rev">—</span></div>
+        <div class="stat">任务 <span class="num" id="count">—</span></div>
+        <div class="stat">SSE <span class="num" id="sse">—</span></div>
+      </div>
+      <p class="hint">
+        App 设置里填 <code id="appbase">—</code> 与同一口令即可同步。
+        服务为 systemd 单元 <code>meridian.service</code>，数据在 <code>/opt/meridian/data/data.json</code>。
+      </p>
+    </section>
+  </div>
+
+  <footer>
+    <span>MERIDIAN · 子午时钟</span>
+    <span><a href="/">← 返回服务器门户</a></span>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var dot = document.getElementById('dot');
+    var health = document.getElementById('health');
+    var rev = document.getElementById('rev');
+    var count = document.getElementById('count');
+    var sse = document.getElementById('sse');
+
+    function setOnline(on, label) {
+      dot.className = 'dot ' + (on ? 'on' : 'off');
+      health.textContent = label;
+    }
+
+    // /health is the only public endpoint — it is enough to answer "is the box up".
+    fetch('api/health', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        setOnline(true, '在线');
+        rev.textContent = j.rev != null ? j.rev : '—';
+        sse.textContent = '可达';
+      })
+      .catch(function () {
+        setOnline(false, '不可达');
+        sse.textContent = '—';
+      });
+
+    // File size, straight from the file that will be downloaded.
+    fetch('files/Meridian-unsigned.ipa', { method: 'HEAD', cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) return;
+        var len = r.headers.get('content-length');
+        if (len) document.getElementById('size').textContent = (len / 1048576).toFixed(2) + ' MB';
+      })
+      .catch(function () {});
+
+    // The published build tag comes from files/version.json, so the page can
+    // never claim a version that is not the file being served.
+    fetch('files/version.json', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (v) {
+        document.getElementById('build').textContent = v.tag + ' · ' + v.builtAt;
+        var first = document.querySelector('.meta span');
+        if (first && v.file) first.textContent = v.file;
+      })
+      .catch(function () {});
+
+    // Everything host-shaped comes from where the page is served, so a fork
+    // needs no edit: /meridian/ on any domain, any port.
+    var here = location.origin + location.pathname.replace(/\/$/, '');
+    var hostnote = document.getElementById('hostnote');
+    if (hostnote) hostnote.textContent = '本机 · ' + location.host;
+    var appbase = document.getElementById('appbase');
+    if (appbase) appbase.textContent = here;
+
+    // Channel count is data, not a hardcoded label: the grid is the source.
+    document.getElementById('chnote').textContent =
+      document.querySelectorAll('#channels .ch').length + ' 条 · 点序号进入';
+  })();
+</script>
+</body>
+</html>

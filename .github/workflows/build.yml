@@ -1,0 +1,339 @@
+name: iOS
+
+# Build, verify and package Meridian on a real macOS runner.
+#
+# This is the only place the app is actually compiled: the development machine
+# is Windows, without Xcode, so CI is the compiler. Every run must therefore
+# prove three things, in order, before it hands out an IPA:
+#
+#   1. XcodeGen can still read project.yml (a generated project is never
+#      committed, so a broken spec must fail here, not on the iPad).
+#   2. The hand-written Info.plist survived generation and survived the build.
+#      UILaunchScreen gone = letterboxed app; NSLocalNetworkUsageDescription
+#      gone = the task server is unreachable on iOS 14+ local-network prompts.
+#   3. The .app that ends up in the IPA actually contains those keys.
+#
+# The output is an unsigned IPA. It is not installable by itself — it is the
+# input to AltStore / Sideloadly / a developer certificate. See docs/BUILD.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Needed only by the release step at the bottom; a fork PR still gets a
+# read-only token and simply skips that step.
+permissions:
+  contents: write
+
+# One build per branch, per trigger. The event name is part of the key on
+# purpose: a push and a manual dispatch for the same commit are two runs, and
+# with a shared group they would cancel each other instead of building.
+concurrency:
+  group: ios-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build IPA
+    # macos-14 is the image this project is validated on (same image used by
+    # the BFG iOS workflow, whose signing/zip steps are reused here). macos-15
+    # works too — the Xcode-selection step below is image-agnostic — but it
+    # brings a newer default toolchain, so it is a one-line upgrade to make
+    # deliberately:  runs-on: macos-15
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # XcodeGen writes a recent project object format; the runner's default
+      # Xcode may be older and refuse it ("future Xcode project file format").
+      # Pick the newest installed Xcode instead of pinning the repo to whatever
+      # the image happens to default to.
+      - name: Select newest available Xcode
+        run: |
+          set -euo pipefail
+          echo "Installed Xcode versions:"
+          ls -d /Applications/Xcode*.app
+          XCODE_PATH=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Selecting $XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH"
+          xcodebuild -version
+          {
+            echo "### Toolchain"
+            echo '```'
+            xcodebuild -version
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # project.yml lives at the repository root, so generate from there.
+      # Do not pass --spec: the default lookup is exactly what a contributor
+      # running `xcodegen generate` locally gets.
+      - name: Generate Xcode project
+        run: |
+          set -euo pipefail
+          xcodegen generate
+          ls -d Meridian.xcodeproj
+
+      # The same checks that run locally on Windows, run again here: they are
+      # cheap, and they fail with the file:line that a Swift compiler error
+      # would only hint at.
+      - name: Static checks
+        run: node Tools/swiftcheck.mjs
+
+      # App Store validation rejects icons with an alpha channel, and actool
+      # happily compiles one. Inspect the PNG IHDR colour type directly so the
+      # failure is "AppIcon.png has alpha", not a rejection after upload.
+      - name: Validate app icons (no alpha)
+        run: |
+          python3 - <<'PY'
+          import struct
+          import sys
+          from pathlib import Path
+
+          root = Path("ios/Meridian/Assets.xcassets/AppIcon.appiconset")
+          pngs = sorted(root.glob("*.png"))
+          problems = []
+          for png in pngs:
+              data = png.read_bytes()
+              if data[:8] != b"\x89PNG\r\n\x1a\n":
+                  problems.append(f"{png.name}: not a PNG")
+                  continue
+              width, height = struct.unpack(">II", data[16:24])
+              color_type = data[25]
+              # 0/2 = grey/RGB (opaque); 3/4/6 = palette/grey-alpha/RGBA.
+              if color_type in (3, 4, 6):
+                  problems.append(f"{png.name}: colour type {color_type} carries alpha")
+              # tRNS is the other way a PNG can be partially transparent.
+              offset = 8
+              while offset + 8 <= len(data):
+                  length, kind = struct.unpack(">I4s", data[offset:offset + 8])
+                  if kind == b"tRNS":
+                      problems.append(f"{png.name}: has a tRNS chunk (transparency)")
+                      break
+                  offset += 12 + length
+
+          marketing = root / "AppIcon-1024.png"
+          if not marketing.is_file():
+              problems.append("AppIcon-1024.png (ios-marketing) is missing")
+          elif struct.unpack(">II", marketing.read_bytes()[16:24]) != (1024, 1024):
+              problems.append("AppIcon-1024.png is not 1024x1024")
+
+          print(f"checked {len(pngs)} app icons")
+          for problem in problems:
+              print(f"::error::{problem}")
+          if problems:
+              sys.exit(1)
+          print("ok: every icon is opaque RGB")
+          PY
+
+      # The plist is hand-written and referenced through INFOPLIST_FILE. If it
+      # ever moves under XcodeGen's `info:` key, every key not restated under
+      # info.properties is silently dropped. Assert against the source file so
+      # that regression is caught at the cheapest possible point.
+      - name: Assert Info.plist keys (source)
+        run: |
+          set -euo pipefail
+          PLIST=ios/Meridian/Info.plist
+          for key in \
+            UILaunchScreen \
+            UIRequiresFullScreen \
+            'UISupportedInterfaceOrientations~ipad' \
+            NSLocalNetworkUsageDescription \
+            NSAppTransportSecurity; do
+            if /usr/libexec/PlistBuddy -c "Print :$key" "$PLIST" >/dev/null 2>&1; then
+              echo "ok   $key"
+            else
+              echo "::error::$key is missing from $PLIST"
+              exit 1
+            fi
+          done
+          if /usr/libexec/PlistBuddy -c "Print :UILaunchScreen:UIColorName" "$PLIST" | grep -qx 'LaunchBackground'; then
+            echo "ok   UILaunchScreen.UIColorName = LaunchBackground"
+          else
+            echo "::error::UILaunchScreen.UIColorName must be LaunchBackground (asset catalog colour)"
+            exit 1
+          fi
+
+      # Unsigned device build. No signing identity is needed because nothing
+      # here is installed directly: the .app is re-signed by the sideloading
+      # tool with the user's own certificate. `-destination generic/platform=iOS`
+      # builds for arm64 device without a connected device.
+      - name: Build (unsigned)
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          xcodebuild \
+            -project Meridian.xcodeproj \
+            -scheme Meridian \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION=1.0.0 \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            build 2>&1 | tee build/xcodebuild.log
+
+      # Assert on the artefact that ships, not just the source. The build can
+      # overwrite what generation produced (GENERATE_INFOPLIST_FILE is NO, but
+      # a future setting change must not be able to pass unnoticed).
+      - name: Assert built app Info.plist
+        run: |
+          set -euo pipefail
+          APP=build/Build/Products/Release-iphoneos/Meridian.app
+          test -d "$APP" || { echo "::error::$APP was not produced"; exit 1; }
+          PLIST="$APP/Info.plist"
+          for key in \
+            UILaunchScreen \
+            UIRequiresFullScreen \
+            'UISupportedInterfaceOrientations~ipad' \
+            NSLocalNetworkUsageDescription \
+            NSAppTransportSecurity; do
+            if /usr/libexec/PlistBuddy -c "Print :$key" "$PLIST" >/dev/null 2>&1; then
+              echo "ok   $key"
+            else
+              echo "::error::$key missing from the built app"
+              exit 1
+            fi
+          done
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$PLIST"
+
+      # An IPA is just a zip with a Payload/ directory. The app bundle name
+      # must stay Meridian.app because CFBundleExecutable points at $(EXECUTABLE_NAME).
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          mkdir -p out/Payload
+          cp -R build/Build/Products/Release-iphoneos/Meridian.app out/Payload/
+          ( cd out && zip -qry Meridian-unsigned.ipa Payload )
+          unzip -l out/Meridian-unsigned.ipa | sed -n '1,20p'
+          ls -lh out/Meridian-unsigned.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Meridian-unsigned-ipa
+          path: out/Meridian-unsigned.ipa
+          retention-days: 14
+
+      # Also attach the IPA to a Release. Tools/publish-to-github.mjs polls the
+      # run, then downloads the raw .ipa asset from this release — no need to
+      # unzip an artifact archive locally, and no GitHub login required.
+      # workflow_dispatch and tag builds only: a PR from a fork has a read-only
+      # token and must not try to create releases.
+      - name: Attach IPA to release
+        # Every non-PR build publishes a release: a push and a manual dispatch are
+        # the same deliverable, and the release asset is what Tools/publish-to-github.mjs
+        # downloads (a plain .ipa, no zip to unpack first).
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Meridian build ${{ github.run_number }}
+          files: out/Meridian-unsigned.ipa
+          prerelease: true
+          fail_on_unmatched_files: true
+
+      # Failure diagnostics: the last 200 lines of xcodebuild end up in the run
+      # summary, so a failed run can be diagnosed from the phone.
+      - name: Publish xcodebuild log tail
+        if: failure()
+        run: |
+          if [ -f build/xcodebuild.log ]; then
+            {
+              echo '### xcodebuild 失败（尾部 200 行）'
+              echo '```'
+              tail -n 200 build/xcodebuild.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "没有 build/xcodebuild.log（失败发生在编译之前）" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # ---------------------------------------------------------------------
+      # Optional signed branch.
+      #
+      # Skipped unless the repository defines BUILD_CERTIFICATE_BASE64, so a
+      # fork or a fresh clone still produces the unsigned IPA. Secrets:
+      #   BUILD_CERTIFICATE_BASE64       .p12, base64-encoded
+      #   P12_PASSWORD                   password for that .p12
+      #   BUILD_PROVISION_PROFILE_BASE64 .mobileprovision, base64-encoded
+      #   KEYCHAIN_PASSWORD              any temporary password
+      #   APPLE_TEAM_ID                  10-character team identifier
+      #
+      # `secrets` is not available in a step-level `if`, hence the env bridge
+      # (the same pattern the BFG workflow uses).
+      # ---------------------------------------------------------------------
+      - name: Import signing identity
+        if: ${{ env.HAS_SIGNING == 'true' }}
+        env:
+          HAS_SIGNING: ${{ secrets.BUILD_CERTIFICATE_BASE64 != '' }}
+        run: |
+          set -euo pipefail
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # macOS ships BSD base64: -d is portable (GNU also accepts it),
+          # --decode is not. Keep this line boring.
+          echo -n "${{ secrets.BUILD_CERTIFICATE_BASE64 }}" | base64 -d > "$CERTIFICATE_PATH"
+          echo -n "${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}" | base64 -d > "$PROFILE_PATH"
+
+          security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "${{ secrets.P12_PASSWORD }}" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "${{ secrets.KEYCHAIN_PASSWORD }}" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Archive and export (signed)
+        if: ${{ env.HAS_SIGNING == 'true' }}
+        env:
+          HAS_SIGNING: ${{ secrets.BUILD_CERTIFICATE_BASE64 != '' }}
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project Meridian.xcodeproj \
+            -scheme Meridian \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            -archivePath build/Meridian.xcarchive \
+            DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} \
+            archive
+
+          cat > "$RUNNER_TEMP/export.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>ad-hoc</string>
+            <key>compileBitcode</key><false/>
+            <key>stripSwiftSymbols</key><true/>
+          </dict></plist>
+          PLIST
+
+          xcodebuild -exportArchive \
+            -archivePath build/Meridian.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist "$RUNNER_TEMP/export.plist"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ env.HAS_SIGNING == 'true' }}
+        env:
+          HAS_SIGNING: ${{ secrets.BUILD_CERTIFICATE_BASE64 != '' }}
+        with:
+          name: Meridian-signed-ipa
+          path: build/export/*.ipa
+          retention-days: 14
