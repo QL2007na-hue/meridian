@@ -4,7 +4,9 @@
 
 SwiftUI · iOS 17+ · **零第三方依赖** · 待办由你自己的服务器下发。
 
-![时间舞台](docs/screenshots/01-clock-stage.png)
+![Meridian](docs/cover.png)
+
+中文 · [English](README.en.md)
 
 ---
 

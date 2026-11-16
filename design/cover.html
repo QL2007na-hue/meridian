@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Meridian · cover</title>
+<style>
+  /* Social preview / README cover. 1200×630 (GitHub's social card ratio). */
+  :root{ --ink:#F4F1EC; --ink-2:#A9A39B; --ink-3:#6F6A63; --ink-4:#46433F;
+         --ember:#E0A662; --hairline:rgba(255,255,255,.075); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{width:1200px;height:630px;overflow:hidden;background:#08090B;
+    font-family:-apple-system,"SF Pro Rounded","SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;position:relative}
+  .glow{position:absolute;inset:0;
+    background:radial-gradient(90% 90% at 30% 55%, rgba(224,166,98,.10) 0%, rgba(224,166,98,.02) 46%, transparent 72%)}
+  .cool{position:absolute;inset:0;
+    background:radial-gradient(60% 60% at 100% 0%, rgba(43,52,64,.22) 0%, transparent 62%)}
+  .horizon{position:absolute;left:64px;right:64px;bottom:74px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent)}
+  .wrap{position:relative;height:100%;padding:56px 64px;display:flex;flex-direction:column;justify-content:space-between}
+  .top{display:flex;justify-content:space-between;align-items:baseline}
+  .caps{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+  .brand{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2)}
+  .mid{display:flex;align-items:center;justify-content:space-between;gap:40px}
+  .clock{font-size:190px;line-height:.84;font-weight:200;letter-spacing:-.045em;
+    font-variant-numeric:tabular-nums;color:var(--ink);display:flex;align-items:center;gap:.04em}
+  .colon{display:inline-flex;flex-direction:column;justify-content:center;gap:26px;width:.18em}
+  .colon i{display:block;width:.075em;height:.075em;border-radius:50%;background:rgba(244,241,236,.5)}
+  .meta{display:flex;gap:14px;align-items:center;margin-top:18px}
+  .meta span{font-size:13px;color:var(--ink-3);letter-spacing:.04em}
+  .dotsep{width:1px;height:10px;background:rgba(255,255,255,.18)}
+  .side{display:flex;gap:14px;padding-left:26px;border-left:1px solid var(--hairline);align-self:stretch}
+  .side .col{display:flex;flex-direction:column;gap:10px;min-width:190px}
+  .side .h{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+  .row{display:flex;align-items:baseline;gap:8px;font-size:14px;color:var(--ink-2)}
+  .row b{width:4px;height:4px;border-radius:50%;background:var(--ink-4);display:inline-block;transform:translateY(-4px)}
+  .row.c b{background:var(--ember)}
+  .row span{font-size:10px;color:var(--ink-4);font-variant-numeric:tabular-nums;width:36px}
+  .bottom{display:flex;justify-content:space-between;align-items:baseline}
+  .tagline{font-size:15px;color:var(--ink-3);letter-spacing:.02em}
+  .tagline b{color:var(--ink-2);font-weight:500}
+  .badges{display:flex;gap:8px}
+  .pill{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+    border:1px solid var(--hairline);border-radius:999px;padding:5px 11px}
+</style>
+</head>
+<body>
+  <div class="glow"></div><div class="cool"></div><div class="horizon"></div>
+  <div class="wrap">
+    <div class="top">
+      <span class="brand">Meridian</span>
+      <span class="caps">iPad landscape clock · iOS 17+</span>
+    </div>
+
+    <div class="mid">
+      <div>
+        <div class="clock">21<span class="colon"><i></i><i></i></span>47</div>
+        <div class="meta">
+          <span>周六 · 11月16日</span><i class="dotsep"></i>
+          <span>农历 十月初七</span><i class="dotsep"></i>
+          <span>第 320 天</span>
+        </div>
+      </div>
+      <div class="side">
+        <div class="col">
+          <div class="h"><span>今日</span><span>3/7</span></div>
+          <div class="row"><b></b><span>09:30</span>晨会 · 同步本周排期</div>
+          <div class="row c"><b></b><span>14:00</span>与设计师过一版首页</div>
+          <div class="row"><b></b><span>22:00</span>写周报并归档</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <span class="tagline">时间永远是主体。<b>待办来自你自己的服务器。</b></span>
+      <span class="badges">
+        <span class="pill">SwiftUI</span>
+        <span class="pill">self-hosted</span>
+        <span class="pill">MIT</span>
+      </span>
+    </div>
+  </div>
+</body>
+</html>
